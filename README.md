@@ -1,6 +1,6 @@
-# libalsacapture
+# libalsacap
 
-## A micro library for capturing audio from input sound devices (aka microphones) using ALSA
+A micro library for capturing audio from input sound devices (aka microphones) using ALSA
 
 ### Build
 
