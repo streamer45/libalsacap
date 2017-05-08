@@ -21,14 +21,15 @@ int test() {
   if (ret != 0) return -2;
   alsacap_start(ac);
   buffer_sz = 2400 * config.channels * 2;
-  buffer = malloc(buffer_sz);
+  buffer = calloc(1, buffer_sz);
   for (int i = 0; i < 200; ++i) {
     ret = alsacap_pcm_read(ac, buffer, buffer_sz);
     if (ret != buffer_sz) return -3;
-    write(1, buffer, ret);
+    ret = write(1, buffer, ret);
+    if (ret != buffer_sz) return -4;
   }
   ret = alsacap_close(ac);
-  if (ret != 0) return -4;
+  if (ret != 0) return -5;
   free(buffer);
   return 0;
 }
