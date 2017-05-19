@@ -3,10 +3,15 @@
 
 #include "lib.h"
 
+#define ALSA_BUFFER_SIZE_MAX 65536
+
 struct alsacap {
   snd_pcm_t *pcm;
   snd_pcm_hw_params_t *hw_params;
   ac_config_t config;
+  size_t period_size;
+  size_t buffer_size;
+  size_t frame_size;
 };
 
 alsacap_t *alsacap_open(char *device) {
@@ -44,7 +49,7 @@ int alsacap_config_set(alsacap_t *cap, ac_config_t *config) {
     ERROR("%s", snd_strerror(ret));
     return -1;
   }
-  ret = snd_pcm_hw_params_set_rate(cap->pcm, cap->hw_params, config->sample_rate, 0);
+  ret = snd_pcm_hw_params_set_rate_near(cap->pcm, cap->hw_params, &config->sample_rate, 0);
   if (ret != 0) {
     ERROR("%s", snd_strerror(ret));
     return -2;
@@ -53,6 +58,22 @@ int alsacap_config_set(alsacap_t *cap, ac_config_t *config) {
   if (ret != 0) {
     ERROR("%s", snd_strerror(ret));
     return -3;
+  }
+  cap->frame_size = 2 * config->channels;
+  snd_pcm_hw_params_get_buffer_size_max(cap->hw_params, &cap->buffer_size);
+  cap->buffer_size = (cap->buffer_size <= ALSA_BUFFER_SIZE_MAX) ? cap->buffer_size : ALSA_BUFFER_SIZE_MAX;
+  ret = snd_pcm_hw_params_set_buffer_size_near(cap->pcm, cap->hw_params, &cap->buffer_size);
+  if (ret != 0) {
+    ERROR("%s", snd_strerror(ret));
+    return -5;
+  }
+  fprintf(stderr, "%zu\n", cap->buffer_size);
+  snd_pcm_hw_params_get_period_size_min(cap->hw_params, &cap->period_size, 0);
+  if (!cap->period_size) cap->period_size = cap->buffer_size / 4;
+  ret = snd_pcm_hw_params_set_period_size_near(cap->pcm, cap->hw_params, &cap->period_size, 0);
+  if (ret != 0) {
+    ERROR("%s", snd_strerror(ret));
+    return -6;
   }
   cap->config = *config;
   return 0;
@@ -79,15 +100,22 @@ ssize_t alsacap_pcm_read(alsacap_t *cap, uint8_t *data, size_t size) {
   size_t nframes;
   size_t format_width;
   size_t channels;
-  format_width = snd_pcm_format_width(cap->config.format);
+  format_width = snd_pcm_format_width(cap->config.format) / 8;
   channels = cap->config.channels;
-  nframes = (size * 8) / (format_width * channels);
+  nframes = size / (format_width * channels);
   ret = snd_pcm_readi(cap->pcm, data, nframes);
-  if (ret < 0) {
+  if (ret == -EPIPE) {
+    /* overrun, try to recover */
+    ret = snd_pcm_prepare(cap->pcm);
+    if (ret < 0) {
+      ERROR("%s", snd_strerror(ret));
+      return -2;
+    }
+  } else if (ret < 0) {
     ERROR("%s", snd_strerror(ret));
     return -1;
   }
-  return ret * (format_width / 8) * channels;
+  return ret * (format_width * channels);
 }
 
 int alsacap_close(alsacap_t *ac) {

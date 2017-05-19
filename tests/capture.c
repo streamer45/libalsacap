@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "lib.h"
+
+/* Captures raw audio from an alsa input device and outputs it to stdin */
 
 int test() {
   int ret;
@@ -11,6 +14,7 @@ int test() {
   alsacap_t *ac;
   uint8_t *buffer;
   size_t buffer_sz;
+  size_t nsamples;
   memset(&config, 0, sizeof(config));
   ac = alsacap_open("hw:0,0");
   if (!ac) return -1;
@@ -20,13 +24,14 @@ int test() {
   ret = alsacap_config_set(ac, &config);
   if (ret != 0) return -2;
   alsacap_start(ac);
-  buffer_sz = 2400 * config.channels * 2;
+  nsamples = 2048;
+  buffer_sz = nsamples * config.channels * sizeof(int16_t);
   buffer = calloc(1, buffer_sz);
-  for (int i = 0; i < 200; ++i) {
+  for (;;) {
     ret = alsacap_pcm_read(ac, buffer, buffer_sz);
-    if (ret != buffer_sz) return -3;
+    if (ret < 0) return ret;
     ret = write(1, buffer, ret);
-    if (ret != buffer_sz) return -4;
+    if (ret < 0) return -4;
   }
   ret = alsacap_close(ac);
   if (ret != 0) return -5;

@@ -1,3 +1,4 @@
 *.so
 *.a
 *.o
+tests/capture

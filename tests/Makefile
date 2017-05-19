@@ -1,4 +1,4 @@
 LIB_NAME=alsacap
 
 all:
-	gcc -g -I../ -I../modules/ -L../ capture.c -o capture -l$(LIB_NAME)
+	gcc -Wall -g -I../ -I../modules/ -L../ -lm capture.c -o capture -l$(LIB_NAME)

@@ -14,4 +14,4 @@ clean:
 	rm -f *.so
 	rm -f *.o
 	rm -f *.a
-	rm -f tests/test*
+	rm -f tests/capture
