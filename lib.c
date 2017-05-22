@@ -9,8 +9,8 @@ struct alsacap {
   snd_pcm_t *pcm;
   snd_pcm_hw_params_t *hw_params;
   ac_config_t config;
-  size_t period_size;
-  size_t buffer_size;
+  snd_pcm_uframes_t period_size;
+  snd_pcm_uframes_t buffer_size;
   size_t frame_size;
 };
 
@@ -67,7 +67,6 @@ int alsacap_config_set(alsacap_t *cap, ac_config_t *config) {
     ERROR("%s", snd_strerror(ret));
     return -5;
   }
-  fprintf(stderr, "%zu\n", cap->buffer_size);
   snd_pcm_hw_params_get_period_size_min(cap->hw_params, &cap->period_size, 0);
   if (!cap->period_size) cap->period_size = cap->buffer_size / 4;
   ret = snd_pcm_hw_params_set_period_size_near(cap->pcm, cap->hw_params, &cap->period_size, 0);
