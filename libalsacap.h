@@ -1,3 +1,6 @@
+#if !defined(_libalsacap_H)
+# define _libalsacap_H (1)
+
 #include <stdint.h>
 #include <alsa/asoundlib.h>
 
@@ -28,3 +31,5 @@ int alsacap_start(alsacap_t *cap);
 int alsacap_stop(alsacap_t *cap);
 ssize_t alsacap_pcm_read(alsacap_t *cap, uint8_t *data, size_t size);
 int alsacap_close(alsacap_t *ac);
+
+#endif

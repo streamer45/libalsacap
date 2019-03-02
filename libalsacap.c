@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "lib.h"
+#include "libalsacap.h"
 
 #define ALSA_BUFFER_SIZE_MAX 65536
 

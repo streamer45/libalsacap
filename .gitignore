@@ -2,3 +2,4 @@
 *.a
 *.o
 tests/capture
+tests/capture_poll*

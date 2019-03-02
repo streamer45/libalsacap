@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <math.h>
 
-#include "lib.h"
+#include "libalsacap.h"
 
 /* Captures raw audio from an alsa input device and outputs it to stdin */
 
